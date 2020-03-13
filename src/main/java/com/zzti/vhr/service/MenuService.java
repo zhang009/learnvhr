@@ -48,6 +48,9 @@ public class MenuService {
         //                第二件事情要根据rid,添加mids
 
         menuRoleMapper.deleteByRid(rid);
+        if(mids==null||mids.length==0){
+            return true;
+        }
         Integer result=menuRoleMapper.insertRecord(rid,mids);
         return result==mids.length;
     }

@@ -2,9 +2,13 @@ package com.zzti.vhr.controller.emp;
 
 import com.zzti.vhr.model.*;
 import com.zzti.vhr.service.*;
+import com.zzti.vhr.utils.POIUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -91,5 +95,29 @@ public class EmpBasicController {
         return RespBean.error("更新失败！");
     }
 
+    //下载文件返回的是ResponseEntity
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportData(){
+        //首先到数据库查询所有的员工数据，然后把数据生成Excel
+        List<Employee> list= (List<Employee>) employeeService.getEmployeeByPage(null,null,null).getData();
+
+        return POIUtils.employee2Excel(list);
+
+    }
+    @PostMapping("/import")
+    public RespBean importData(MultipartFile file) throws IOException {
+        //file当成excel文件来解析
+       // file.transferTo(new File("E:\\javatest.xls"));
+        List<Employee> list=POIUtils.excel2Employee(file,nationService.getAllNations(),politicsstatusService.getAllPoliticsstatus(),
+                departmentService.getAllDepartmentsWithOutChildren(),positionService.getAllPositions(),jobLevelService.getAllJobLevels());
+      /*  for (Employee employee : list) {
+            System.out.println(employee.toString());
+        }*/
+      //将解析的数据插入到数据库
+        if(employeeService.addEmps(list)==list.size()) {
+            return RespBean.ok("上传成功！");
+        }
+       return RespBean.error("上传失败");
+    }
 
 }
